@@ -199,6 +199,27 @@ class SpotInterface:
             "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
         return []
 
+    def velocity_cmd_listener(self, twist):
+        """Callback that sends instantaneous velocity [m/s] commands to Spot"""
+        
+        v_x = twist.linear.x
+        v_y = twist.linear.y
+        v_rot = twist.angular.z
+
+        cmd = RobotCommandBuilder.velocity_command(
+            v_x=v_x,
+            v_y=v_y,
+            v_rot=v_rot
+        )
+
+        self.command_client.robot_command(
+            cmd,
+            end_time_secs=time.time() + self.VELOCITY_CMD_DURATION
+        )
+        rospy.loginfo(
+            "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
+        return []
+
     ### Helper functions ###
 
     def block_until_pose_reached(self, cmd, goal):
@@ -461,13 +482,15 @@ class SpotInterface:
         rospy.Service("trajectory_cmd", spot_ros_srvs.srv.Trajectory, self.trajectory_cmd_srv)
         rospy.Service("velocity_cmd", spot_ros_srvs.srv.Velocity, self.velocity_cmd_srv)
 
+        rospy.Subscriber("cmd_vel", geometry_msgs.msg.Twist, self.velocity_cmd_listener)
+
         # Single image publisher will publish all images from all Spot cameras
         kinematic_state_pub = rospy.Publisher(
             "kinematic_state", spot_ros_msgs.msg.KinematicState, queue_size=1)
         robot_state_pub = rospy.Publisher(
             "robot_state", spot_ros_msgs.msg.RobotState, queue_size=1)
         robot_odom_pub = rospy.Publisher(
-            "robot_odom", nav_msgs.msg.odometry, queue_size=1)
+            "robot_odom", nav_msgs.msg.Odometry, queue_size=1)
         occupancy_grid_pub = rospy.Publisher(
             "occupancy_grid", visualization_msgs.msg.Marker, queue_size=1)
 
@@ -525,7 +548,7 @@ class SpotInterface:
                     t.transform.rotation.w = kinematic_state.vision_tform_body.rotation.w
                     spot_tf_broadcaster.sendTransform(t)
 
-                    odom_out = nav_msgs.msg.odometry()
+                    odom_out = nav_msgs.msg.Odometry()
                     odom_out.pose.position.x = kinematic_state.vision_tform_body.translation.x
                     odom_out.pose.position.y = kinematic_state.vision_tform_body.translation.y
                     odom_out.pose.position.z = kinematic_state.vision_tform_body.translation.z
@@ -533,7 +556,6 @@ class SpotInterface:
                     odom_out.pose.orientation.y = kinematic_state.vision_tform_body.rotation.y
                     odom_out.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
                     odom_out.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
-
                     robot_odom_pub.publish(odom_out)
 
                     if False:
