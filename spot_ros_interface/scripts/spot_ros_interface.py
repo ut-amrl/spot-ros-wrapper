@@ -30,6 +30,7 @@ from bosdyn.client.frame_helpers import get_a_tform_b, get_vision_tform_body, ge
 import rospy
 import diagnostic_msgs.msg
 import geometry_msgs.msg
+import nav_msgs.msg
 import std_msgs.msg
 import sensor_msgs.msg
 import visualization_msgs.msg
@@ -462,11 +463,13 @@ class SpotInterface:
 
         # Single image publisher will publish all images from all Spot cameras
         kinematic_state_pub = rospy.Publisher(
-            "kinematic_state", spot_ros_msgs.msg.KinematicState, queue_size=20)
+            "kinematic_state", spot_ros_msgs.msg.KinematicState, queue_size=1)
         robot_state_pub = rospy.Publisher(
-            "robot_state", spot_ros_msgs.msg.RobotState, queue_size=20)
+            "robot_state", spot_ros_msgs.msg.RobotState, queue_size=1)
+        robot_odom_pub = rospy.Publisher(
+            "robot_odom", nav_msgs.msg.odometry, queue_size=1)
         occupancy_grid_pub = rospy.Publisher(
-            "occupancy_grid", visualization_msgs.msg.Marker, queue_size=20)
+            "occupancy_grid", visualization_msgs.msg.Marker, queue_size=1)
 
         # Publish tf2 from visual odometry frame to Spot's base link
         spot_tf_broadcaster = tf2_ros.TransformBroadcaster()
@@ -475,19 +478,19 @@ class SpotInterface:
         spot_tf_static_broadcaster = tf2_ros.StaticTransformBroadcaster()
 
         image_only_pub = rospy.Publisher(
-            "spot_image", sensor_msgs.msg.Image, queue_size=20)
+            "spot_image", sensor_msgs.msg.Image, queue_size=1)
 
         camera_info_pub = rospy.Publisher(
-            "spot_cam_info", sensor_msgs.msg.CameraInfo, queue_size=20)
+            "spot_cam_info", sensor_msgs.msg.CameraInfo, queue_size=1)
 
         # TODO: Publish depth images
         # depth_image_pub = rospy.Publisher(
-        #     "depth_image", sensor_msgs.msg.Image, queue_size=20)
+        #     "depth_image", sensor_msgs.msg.Image, queue_size=1)
 
         # For RViz 3rd person POV visualization
         if self.third_person_view:
             joint_state_pub = rospy.Publisher(
-                "joint_state_from_spot", sensor_msgs.msg.JointState, queue_size=20)
+                "joint_state_from_spot", sensor_msgs.msg.JointState, queue_size=1)
 
         try:
             with bosdyn.client.lease.LeaseKeepAlive(self.lease_client), bosdyn.client.estop.EstopKeepAlive(
@@ -521,6 +524,17 @@ class SpotInterface:
                     t.transform.rotation.z = kinematic_state.vision_tform_body.rotation.z
                     t.transform.rotation.w = kinematic_state.vision_tform_body.rotation.w
                     spot_tf_broadcaster.sendTransform(t)
+
+                    odom_out = nav_msgs.msg.odometry()
+                    odom_out.pose.position.x = kinematic_state.vision_tform_body.translation.x
+                    odom_out.pose.position.y = kinematic_state.vision_tform_body.translation.y
+                    odom_out.pose.position.z = kinematic_state.vision_tform_body.translation.z
+                    odom_out.pose.orientation.x = kinematic_state.vision_tform_body.rotation.x
+                    odom_out.pose.orientation.y = kinematic_state.vision_tform_body.rotation.y
+                    odom_out.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
+                    odom_out.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
+
+                    robot_odom_pub.publish(odom_out)
 
                     if False:
                         if self.third_person_view:
