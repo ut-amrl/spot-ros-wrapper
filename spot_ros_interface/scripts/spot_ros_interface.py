@@ -522,85 +522,86 @@ class SpotInterface:
                     t.transform.rotation.w = kinematic_state.vision_tform_body.rotation.w
                     spot_tf_broadcaster.sendTransform(t)
 
-                    if self.third_person_view:
-                        joint_state_pub.publish(kinematic_state.joint_states)
+                    if False:
+                        if self.third_person_view:
+                            joint_state_pub.publish(kinematic_state.joint_states)
 
-                    ''' Publish Images'''
-                    img_reqs = [image_pb2.ImageRequest(image_source_name=source, image_format=image_pb2.Image.FORMAT_RAW) for source in self.image_source_names[2:3]]
-                    image_list = self.image_client.get_image(img_reqs)
+                        ''' Publish Images'''
+                        img_reqs = [image_pb2.ImageRequest(image_source_name=source, image_format=image_pb2.Image.FORMAT_RAW) for source in self.image_source_names[2:3]]
+                        image_list = self.image_client.get_image(img_reqs)
 
-                    for img in image_list:
-                        if img.status == image_pb2.ImageResponse.STATUS_OK:
+                        for img in image_list:
+                            if img.status == image_pb2.ImageResponse.STATUS_OK:
 
-                            header = std_msgs.msg.Header()
-                            header.stamp = t.header.stamp
-                            header.frame_id = img.source.name
+                                header = std_msgs.msg.Header()
+                                header.stamp = t.header.stamp
+                                header.frame_id = img.source.name
 
-                            if img.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_DEPTH_U16:
-                                dtype = np.uint16
-                            else:
-                                dtype = np.uint8
+                                if img.shot.image.pixel_format == image_pb2.Image.PIXEL_FORMAT_DEPTH_U16:
+                                    dtype = np.uint16
+                                else:
+                                    dtype = np.uint8
 
-                            if img.shot.image.format == image_pb2.Image.FORMAT_RAW:
-                                image = np.fromstring(img.shot.image.data, dtype=dtype)
-                                image = image.reshape(img.shot.image.rows, img.shot.image.cols)
+                                if img.shot.image.format == image_pb2.Image.FORMAT_RAW:
+                                    image = np.fromstring(img.shot.image.data, dtype=dtype)
+                                    image = image.reshape(img.shot.image.rows, img.shot.image.cols)
 
-                            # Make Image component of ImageCapture
-                            i = sensor_msgs.msg.Image()
-                            i.header = header
-                            i.width = img.shot.image.cols
-                            i.height = img.shot.image.rows
-                            i.data = img.shot.image.data if img.shot.image.format != image_pb2.Image.FORMAT_RAW else image.tobytes()
-                            i.step = img.shot.image.cols
-                            i.encoding = 'mono8'
+                                # Make Image component of ImageCapture
+                                i = sensor_msgs.msg.Image()
+                                i.header = header
+                                i.width = img.shot.image.cols
+                                i.height = img.shot.image.rows
+                                i.data = img.shot.image.data if img.shot.image.format != image_pb2.Image.FORMAT_RAW else image.tobytes()
+                                i.step = img.shot.image.cols
+                                i.encoding = 'mono8'
 
-                            # CameraInfo
-                            cam_info = sensor_msgs.msg.CameraInfo()
-                            cam_info.header = i.header
-                            cam_info.width = i.width
-                            cam_info.height = i.height
-                            cam_info.distortion_model = "plumb_bob"
-                            cam_info.D = [0.0,0.0,0.0,0.0]
-                            f = img.source.pinhole.intrinsics.focal_length
-                            c = img.source.pinhole.intrinsics.principal_point
-                            cam_info.K = \
-                                [f.x, 0, c.x,  \
-                                0, f.y, c.y,   \
-                                0,   0,  1]
-                            
-                            # Transform from base_link to camera for current img
-                            body_tform_cam = get_a_tform_b(img.shot.transforms_snapshot,
-                                BODY_FRAME_NAME,
-                                img.shot.frame_name_image_sensor)
-                            
-                            # Generate camera to body Transform
-                            body_tform_cam_tf = geometry_msgs.msg.Transform()
-                            body_tform_cam_tf.translation.x = body_tform_cam.position.x
-                            body_tform_cam_tf.translation.y = body_tform_cam.position.y
-                            body_tform_cam_tf.translation.z = body_tform_cam.position.z
-                            body_tform_cam_tf.rotation.x = body_tform_cam.rotation.x
-                            body_tform_cam_tf.rotation.y = body_tform_cam.rotation.y
-                            body_tform_cam_tf.rotation.z = body_tform_cam.rotation.z
-                            body_tform_cam_tf.rotation.w = body_tform_cam.rotation.w
+                                # CameraInfo
+                                cam_info = sensor_msgs.msg.CameraInfo()
+                                cam_info.header = i.header
+                                cam_info.width = i.width
+                                cam_info.height = i.height
+                                cam_info.distortion_model = "plumb_bob"
+                                cam_info.D = [0.0,0.0,0.0,0.0]
+                                f = img.source.pinhole.intrinsics.focal_length
+                                c = img.source.pinhole.intrinsics.principal_point
+                                cam_info.K = \
+                                    [f.x, 0, c.x,  \
+                                    0, f.y, c.y,   \
+                                    0,   0,  1]
+                                
+                                # Transform from base_link to camera for current img
+                                body_tform_cam = get_a_tform_b(img.shot.transforms_snapshot,
+                                    BODY_FRAME_NAME,
+                                    img.shot.frame_name_image_sensor)
+                                
+                                # Generate camera to body Transform
+                                body_tform_cam_tf = geometry_msgs.msg.Transform()
+                                body_tform_cam_tf.translation.x = body_tform_cam.position.x
+                                body_tform_cam_tf.translation.y = body_tform_cam.position.y
+                                body_tform_cam_tf.translation.z = body_tform_cam.position.z
+                                body_tform_cam_tf.rotation.x = body_tform_cam.rotation.x
+                                body_tform_cam_tf.rotation.y = body_tform_cam.rotation.y
+                                body_tform_cam_tf.rotation.z = body_tform_cam.rotation.z
+                                body_tform_cam_tf.rotation.w = body_tform_cam.rotation.w
 
-                            camera_transform_stamped = geometry_msgs.msg.TransformStamped()
-                            camera_transform_stamped.header.stamp = header.stamp
-                            camera_transform_stamped.header.frame_id = "base_link"
-                            camera_transform_stamped.transform = body_tform_cam_tf
-                            camera_transform_stamped.child_frame_id = img.source.name
+                                camera_transform_stamped = geometry_msgs.msg.TransformStamped()
+                                camera_transform_stamped.header.stamp = header.stamp
+                                camera_transform_stamped.header.frame_id = "base_link"
+                                camera_transform_stamped.transform = body_tform_cam_tf
+                                camera_transform_stamped.child_frame_id = img.source.name
 
-                            # Publish body to camera static tf
-                            spot_tf_static_broadcaster.sendTransform(camera_transform_stamped)
+                                # Publish body to camera static tf
+                                spot_tf_static_broadcaster.sendTransform(camera_transform_stamped)
 
-                            # Publish current image and camera info
-                            image_only_pub.publish(i)
-                            camera_info_pub.publish(cam_info)
+                                # Publish current image and camera info
+                                image_only_pub.publish(i)
+                                camera_info_pub.publish(cam_info)
 
-                    ''' Publish occupancy grid'''
-                    if occupancy_grid_pub.get_num_connections() > 0:
-                        local_grid_proto = self.grid_client.get_local_grids(['terrain'])
-                        markers = get_terrain_markers(local_grid_proto)
-                        occupancy_grid_pub.publish(markers)
+                        ''' Publish occupancy grid'''
+                        if occupancy_grid_pub.get_num_connections() > 0:
+                            local_grid_proto = self.grid_client.get_local_grids(['terrain'])
+                            markers = get_terrain_markers(local_grid_proto)
+                            occupancy_grid_pub.publish(markers)
 
                     rospy.logdebug("Looping...")
                     rate.sleep()
