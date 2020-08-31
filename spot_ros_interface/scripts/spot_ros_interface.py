@@ -549,13 +549,13 @@ class SpotInterface:
                     spot_tf_broadcaster.sendTransform(t)
 
                     odom_out = nav_msgs.msg.Odometry()
-                    odom_out.pose.position.x = kinematic_state.vision_tform_body.translation.x
-                    odom_out.pose.position.y = kinematic_state.vision_tform_body.translation.y
-                    odom_out.pose.position.z = kinematic_state.vision_tform_body.translation.z
-                    odom_out.pose.orientation.x = kinematic_state.vision_tform_body.rotation.x
-                    odom_out.pose.orientation.y = kinematic_state.vision_tform_body.rotation.y
-                    odom_out.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
-                    odom_out.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
+                    odom_out.pose.pose.position.x = kinematic_state.vision_tform_body.translation.x
+                    odom_out.pose.pose.position.y = kinematic_state.vision_tform_body.translation.y
+                    odom_out.pose.pose.position.z = kinematic_state.vision_tform_body.translation.z
+                    odom_out.pose.pose.orientation.x = kinematic_state.vision_tform_body.rotation.x
+                    odom_out.pose.pose.orientation.y = kinematic_state.vision_tform_body.rotation.y
+                    odom_out.pose.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
+                    odom_out.pose.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
                     robot_odom_pub.publish(odom_out)
 
                     if False:
