@@ -549,14 +549,35 @@ class SpotInterface:
                     spot_tf_broadcaster.sendTransform(t)
 
                     odom_out = nav_msgs.msg.Odometry()
+                    odom_out.header.stamp = kinematic_state.header
+                    odom_out.header.frame_id = "odom"
+                    odom_out.child_frame_id = "base_link"
                     odom_out.pose.pose.position.x = kinematic_state.vision_tform_body.translation.x
                     odom_out.pose.pose.position.y = kinematic_state.vision_tform_body.translation.y
                     odom_out.pose.pose.position.z = kinematic_state.vision_tform_body.translation.z
+
                     odom_out.pose.pose.orientation.x = kinematic_state.vision_tform_body.rotation.x
                     odom_out.pose.pose.orientation.y = kinematic_state.vision_tform_body.rotation.y
                     odom_out.pose.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
                     odom_out.pose.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
+
+                    odom_out.pose.twist = ks_msg.velocity_of_body_in_odom
                     robot_odom_pub.publish(odom_out)
+
+
+'''
+        ---velocity_of_body_in_odom
+
+        ks_msg.velocity_of_body_in_odom.linear.x = robot_state.kinematic_state.velocity_of_body_in_odom.linear.x
+        ks_msg.velocity_of_body_in_odom.linear.y = robot_state.kinematic_state.velocity_of_body_in_odom.linear.y
+        ks_msg.velocity_of_body_in_odom.linear.z = robot_state.kinematic_state.velocity_of_body_in_odom.linear.z
+
+        ks_msg.velocity_of_body_in_odom.angular.x = robot_state.kinematic_state.velocity_of_body_in_odom.angular.x
+        ks_msg.velocity_of_body_in_odom.angular.y = robot_state.kinematic_state.velocity_of_body_in_odom.angular.y
+        ks_msg.velocity_of_body_in_odom.angular.z = robot_state.kinematic_state.velocity_of_body_in_odom.angular.z
+'''
+
+
 
                     if False:
                         if self.third_person_view:
