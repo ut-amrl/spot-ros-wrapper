@@ -561,23 +561,20 @@ class SpotInterface:
                     odom_out.pose.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
                     odom_out.pose.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
 
-                    odom_out.pose.twist = ks_msg.velocity_of_body_in_odom
+                    odom_out.twist = kinematic_state.velocity_of_body_in_odom
                     robot_odom_pub.publish(odom_out)
 
+                    '''
+                    ---velocity_of_body_in_odom
 
-'''
-        ---velocity_of_body_in_odom
+                    ks_msg.velocity_of_body_in_odom.linear.x = robot_state.kinematic_state.velocity_of_body_in_odom.linear.x
+                    ks_msg.velocity_of_body_in_odom.linear.y = robot_state.kinematic_state.velocity_of_body_in_odom.linear.y
+                    ks_msg.velocity_of_body_in_odom.linear.z = robot_state.kinematic_state.velocity_of_body_in_odom.linear.z
 
-        ks_msg.velocity_of_body_in_odom.linear.x = robot_state.kinematic_state.velocity_of_body_in_odom.linear.x
-        ks_msg.velocity_of_body_in_odom.linear.y = robot_state.kinematic_state.velocity_of_body_in_odom.linear.y
-        ks_msg.velocity_of_body_in_odom.linear.z = robot_state.kinematic_state.velocity_of_body_in_odom.linear.z
-
-        ks_msg.velocity_of_body_in_odom.angular.x = robot_state.kinematic_state.velocity_of_body_in_odom.angular.x
-        ks_msg.velocity_of_body_in_odom.angular.y = robot_state.kinematic_state.velocity_of_body_in_odom.angular.y
-        ks_msg.velocity_of_body_in_odom.angular.z = robot_state.kinematic_state.velocity_of_body_in_odom.angular.z
-'''
-
-
+                    ks_msg.velocity_of_body_in_odom.angular.x = robot_state.kinematic_state.velocity_of_body_in_odom.angular.x
+                    ks_msg.velocity_of_body_in_odom.angular.y = robot_state.kinematic_state.velocity_of_body_in_odom.angular.y
+                    ks_msg.velocity_of_body_in_odom.angular.z = robot_state.kinematic_state.velocity_of_body_in_odom.angular.z
+                    '''
 
                     if False:
                         if self.third_person_view:
@@ -672,7 +669,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     bosdyn.client.util.add_common_arguments(parser)
     parser.add_argument('--motors_on', help='Power on motors [Y/n]', default="Y")
-    options = parser.parse_args(sys.argv[1:])
+    options, unknown = parser.parse_known_args(sys.argv[1:])
 
     try:
         robot = SpotInterface(options)
