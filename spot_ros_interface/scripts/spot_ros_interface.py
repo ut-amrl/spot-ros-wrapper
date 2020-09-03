@@ -561,7 +561,7 @@ class SpotInterface:
                     odom_out.pose.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
                     odom_out.pose.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
 
-                    odom_out.pose.twist = ks_msg.velocity_of_body_in_odom
+                    odom_out.pose.twist = kinematic_state.velocity_of_body_in_odom
                     robot_odom_pub.publish(odom_out)
 
 
