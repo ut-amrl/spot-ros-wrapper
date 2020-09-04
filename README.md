@@ -10,37 +10,25 @@ The [spot_ros_interface](./spot_ros_interface/) ROS package provides a ROS inter
 ![System Architecture](./docs/SystemArchitecture.png)
 
 # Build and Run
-Go to your catkin workspace directory, and build
-```
-cd ~/spot-ros-wrapper
-catkin build
-```
-
-After the build finishes, you must source the environment. **This must be done every time after building.**
-```
-source ~/spot-ros-wrapper/devel/setup.bash
-```
-
-Now let us start the ROS Wrapper Node. We first need to run `roscore`:
-```
-roscore
-```
-That process must be up and running whenever you want to run ROS Nodes.
-
-Open a new terminal, source your virtual environment and source the latest build:
-```
-# In a new terminal
-activate_venv spot_venv
-cd ~/spot-ros-wrapper
-source devel/setup.bash
-```
-And finally, let us start the ROS Wrapper node:
-```
-rosrun spot_ros_interface  spot_ros_interface.py --username USERNAME --password PASSWORD  192.168.80.3
-```
-*Note:* Spot's default IP address is 192.168.80.3 over WiFi, and 10.0.0.3 over ethernet.
-
-*Note:* You must be able to ping Spot's IP addess in order to communicate. The easiest way to do so is to connect to Spot's Wi-Fi hotspot directly, or to its ethernet port. For more information, reference Spot's instruction manuals on ways to communicate.
+1. Set up your catkin workspace (e.g. `~/catkin_ws`), and source the developer init script:
+    ```
+    source ~/catkin_ws/devel/setup.bash
+    ```
+1. Clone this repo to the `src` directory in your Catkin workspace
+    ```
+    cd ~/catkin_ws/src/
+    git clone https://github.com/ut-amrl/spot-ros-wrapper.git
+    ```
+1. Build using `catkin_make`:
+   ```
+   cd ~/catkin_ws
+   catkin build
+   ```
+1. Run:
+	```
+	rosrun spot_ros_interface  spot_ros_interface.py --username USERNAME --password PASSWORD  192.168.80.3
+	```
+	*Note:* Spot's default IP address is 192.168.80.3 over WiFi, 10.0.0.3 over the back ethernet port, and 192.168.50.3 for the front GXP port.
 
 ### Controlling Spot from your keyboard
 
