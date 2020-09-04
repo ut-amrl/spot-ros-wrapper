@@ -226,8 +226,8 @@ class SpotInterface:
             cmd,
             end_time_secs=time.time() + self.VELOCITY_CMD_DURATION
         )
-        rospy.loginfo(
-            "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
+        # rospy.loginfo(
+        #     "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
         return []
 
     ### Helper functions ###
@@ -501,7 +501,7 @@ class SpotInterface:
         robot_state_pub = rospy.Publisher(
             "robot_state", spot_ros_msgs.msg.RobotState, queue_size=1)
         robot_odom_pub = rospy.Publisher(
-            "robot_odom", nav_msgs.msg.Odometry, queue_size=1)
+            "odom", nav_msgs.msg.Odometry, queue_size=1)
         occupancy_grid_pub = rospy.Publisher(
             "occupancy_grid", visualization_msgs.msg.Marker, queue_size=1)
 
