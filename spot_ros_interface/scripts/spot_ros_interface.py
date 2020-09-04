@@ -32,6 +32,7 @@ import diagnostic_msgs.msg
 import geometry_msgs.msg
 import nav_msgs.msg
 import std_msgs.msg
+import std_srvs.srv
 import sensor_msgs.msg
 import visualization_msgs.msg
 import spot_ros_msgs.msg
@@ -132,6 +133,15 @@ class SpotInterface:
         cmd = RobotCommandBuilder.selfright_command()
         ret = self.command_client.robot_command(cmd)
         rospy.loginfo("Robot self right cmd sent. {}".format(ret))
+
+        return []
+
+    def sit_cmd_srv(self, stand):
+        """Callback that sends sit cmd"""
+
+        cmd = RobotCommandBuilder.sit_command()
+        ret = self.command_client.robot_command(cmd)
+        rospy.loginfo("Robot sit cmd sent. {}".format(ret))
 
         return []
 
@@ -479,6 +489,7 @@ class SpotInterface:
         # Each service will handle a specific command to Spot instance
         rospy.Service("self_right_cmd", spot_ros_srvs.srv.Stand, self.self_right_cmd_srv)
         rospy.Service("stand_cmd", spot_ros_srvs.srv.Stand, self.stand_cmd_srv)
+        rospy.Service("sit_cmd", std_srvs.srv.SetBool, self.sit_cmd_srv)
         rospy.Service("trajectory_cmd", spot_ros_srvs.srv.Trajectory, self.trajectory_cmd_srv)
         rospy.Service("velocity_cmd", spot_ros_srvs.srv.Velocity, self.velocity_cmd_srv)
 
@@ -549,7 +560,7 @@ class SpotInterface:
                     spot_tf_broadcaster.sendTransform(t)
 
                     odom_out = nav_msgs.msg.Odometry()
-                    odom_out.header.stamp = kinematic_state.header
+                    odom_out.header = kinematic_state.header
                     odom_out.header.frame_id = "odom"
                     odom_out.child_frame_id = "base_link"
                     odom_out.pose.pose.position.x = kinematic_state.vision_tform_body.translation.x
@@ -561,7 +572,7 @@ class SpotInterface:
                     odom_out.pose.pose.orientation.z = kinematic_state.vision_tform_body.rotation.z
                     odom_out.pose.pose.orientation.w = kinematic_state.vision_tform_body.rotation.w
                     
-                    odom_out.twist = kinematic_state.velocity_of_body_in_odom
+                    odom_out.twist.twist = kinematic_state.velocity_of_body_in_odom
                     robot_odom_pub.publish(odom_out)
 
                     '''
