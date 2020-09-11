@@ -7,7 +7,7 @@ import sys
 import os
 import subprocess
 import time
-import numpy as np
+import numpy as np  
 
 # Bosdyn specific imports
 import bosdyn.client
@@ -54,6 +54,8 @@ class SpotInterface:
     LOGGER = logging.getLogger()
 
     def __init__(self, config):
+        self.started_motors = False
+        self.t_last_non_zero_cmd = 0
         # Ensure interface can ping Spot
         try:
             with open(os.devnull, 'wb') as devnull:
@@ -189,6 +191,9 @@ class SpotInterface:
         spot_ros_srvs.srv.TrajectoryResponse(final_pose)
 
     def velocity_cmd_srv(self, twist):
+        if not self.started_motors:
+            print('Motors not started, ignoring vel. cmd')
+            return
         """Callback that sends instantaneous velocity [m/s] commands to Spot"""
         
         v_x = twist.velocity.linear.x
@@ -205,16 +210,23 @@ class SpotInterface:
             cmd,
             end_time_secs=time.time() + self.VELOCITY_CMD_DURATION
         )
-        rospy.loginfo(
-            "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
+        # rospy.loginfo(
+        #     "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
         return []
 
     def velocity_cmd_listener(self, twist):
         """Callback that sends instantaneous velocity [m/s] commands to Spot"""
-        
+        MAX_MARCHING_TIME = 5
         v_x = twist.linear.x
         v_y = twist.linear.y
         v_rot = twist.angular.z
+        all_zero  = (v_x == 0) and (v_y == 0) and (v_rot == 0)
+        if (all_zero):
+            if self.t_last_non_zero_cmd < time.monotonic() - MAX_MARCHING_TIME:
+                # No need to send command, just return.
+                return
+        else:
+            self.t_last_non_zero_cmd = time.monotonic()
 
         cmd = RobotCommandBuilder.velocity_command(
             v_x=v_x,
@@ -222,10 +234,13 @@ class SpotInterface:
             v_rot=v_rot
         )
 
-        self.command_client.robot_command(
-            cmd,
-            end_time_secs=time.time() + self.VELOCITY_CMD_DURATION
-        )
+        try: 
+            self.command_client.robot_command(
+                cmd,
+                end_time_secs=time.time() + self.VELOCITY_CMD_DURATION
+            )
+        except:
+            print("Invalid command: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
         # rospy.loginfo(
         #     "Robot velocity cmd sent: v_x=${},v_y=${},v_rot${}".format(v_x, v_y, v_rot))
         return []
@@ -535,6 +550,7 @@ class SpotInterface:
                     self.robot.power_on(timeout_sec=20)
                     assert self.robot.is_powered_on(), "Robot power on failed."
                     rospy.loginfo("Robot powered on.")
+                    self.started_motors = True
                 else:
                     rospy.loginfo("Not powering on robot, continuing")
 
