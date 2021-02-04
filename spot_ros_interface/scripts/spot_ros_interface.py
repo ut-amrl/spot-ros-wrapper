@@ -52,6 +52,7 @@ class SpotInterface:
     y_goal_tolerance = 0.05 #[m]
     angle_goal_tolerance = 0.075 #[rad]
     LOGGER = logging.getLogger()
+    sim = False
 
     def __init__(self, config):
         self.started_motors = False
@@ -100,10 +101,14 @@ class SpotInterface:
         self.robot_state_client = self.robot.ensure_client(
             RobotStateClient.default_service_name)
 
+        # Set simulation state
+        self.sim = config.sim
+
         # Client to request local occupancy grid
-        self.grid_client = self.robot.ensure_client(
-            LocalGridClient.default_service_name)
-        self.local_grid_types = self.grid_client.get_local_grid_types()
+        if not self.sim:
+            self.grid_client = self.robot.ensure_client(
+                LocalGridClient.default_service_name)
+            self.local_grid_types = self.grid_client.get_local_grid_types()
 
         # Spot requires a software estop to be activated.
         estop_client = self.robot.ensure_client(
@@ -424,28 +429,29 @@ class SpotInterface:
         ks_msg.joint_states = js
 
         # SE3Pose representing transform of Spot's Body frame relative to the inertial Vision frame
-        vision_tform_body = get_vision_tform_body(robot_state.kinematic_state.transforms_snapshot)
+        if not self.sim:
+            vision_tform_body = get_vision_tform_body(robot_state.kinematic_state.transforms_snapshot)
 
-        ks_msg.vision_tform_body.translation.x = vision_tform_body.x
-        ks_msg.vision_tform_body.translation.y = vision_tform_body.y
-        ks_msg.vision_tform_body.translation.z = vision_tform_body.z
+            ks_msg.vision_tform_body.translation.x = vision_tform_body.x
+            ks_msg.vision_tform_body.translation.y = vision_tform_body.y
+            ks_msg.vision_tform_body.translation.z = vision_tform_body.z
 
-        ks_msg.vision_tform_body.rotation.x = vision_tform_body.rot.x
-        ks_msg.vision_tform_body.rotation.y = vision_tform_body.rot.y
-        ks_msg.vision_tform_body.rotation.z = vision_tform_body.rot.z
-        ks_msg.vision_tform_body.rotation.w = vision_tform_body.rot.w
+            ks_msg.vision_tform_body.rotation.x = vision_tform_body.rot.x
+            ks_msg.vision_tform_body.rotation.y = vision_tform_body.rot.y
+            ks_msg.vision_tform_body.rotation.z = vision_tform_body.rot.z
+            ks_msg.vision_tform_body.rotation.w = vision_tform_body.rot.w
 
-        # odom_tform_body: SE3Pose representing transform of Spot's Body frame relative to the odometry frame
-        odom_tform_body = get_odom_tform_body(robot_state.kinematic_state.transforms_snapshot)
+            # odom_tform_body: SE3Pose representing transform of Spot's Body frame relative to the odometry frame
+            odom_tform_body = get_odom_tform_body(robot_state.kinematic_state.transforms_snapshot)
 
-        ks_msg.odom_tform_body.translation.x = odom_tform_body.x
-        ks_msg.odom_tform_body.translation.y = odom_tform_body.y
-        ks_msg.odom_tform_body.translation.z = odom_tform_body.z
+            ks_msg.odom_tform_body.translation.x = odom_tform_body.x
+            ks_msg.odom_tform_body.translation.y = odom_tform_body.y
+            ks_msg.odom_tform_body.translation.z = odom_tform_body.z
 
-        ks_msg.odom_tform_body.rotation.x = odom_tform_body.rot.x
-        ks_msg.odom_tform_body.rotation.y = odom_tform_body.rot.y
-        ks_msg.odom_tform_body.rotation.z = odom_tform_body.rot.z
-        ks_msg.odom_tform_body.rotation.w = odom_tform_body.rot.w
+            ks_msg.odom_tform_body.rotation.x = odom_tform_body.rot.x
+            ks_msg.odom_tform_body.rotation.y = odom_tform_body.rot.y
+            ks_msg.odom_tform_body.rotation.z = odom_tform_body.rot.z
+            ks_msg.odom_tform_body.rotation.w = odom_tform_body.rot.w
 
         ''' velocity_of_body_in_vision '''
         ks_msg.velocity_of_body_in_vision.linear.x = robot_state.kinematic_state.velocity_of_body_in_vision.linear.x
@@ -696,8 +702,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     bosdyn.client.util.add_common_arguments(parser)
     parser.add_argument('--motors_on', help='Power on motors [Y/n]', default="Y")
+    parser.add_argument('-s', '--sim', '--simulation', help='Run in simulation mode', action="store_true")
     options, unknown = parser.parse_known_args(sys.argv[1:])
-
     try:
         robot = SpotInterface(options)
         robot.start_spot_ros_interface()
