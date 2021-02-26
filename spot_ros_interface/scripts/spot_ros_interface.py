@@ -71,7 +71,6 @@ class SpotInterface:
         # Set up SDK
         bosdyn.client.util.setup_logging(config.verbose)
         self.sdk = bosdyn.client.create_standard_sdk('spot_ros_interface_sdk')
-        self.sdk.load_app_token(config.app_token)
 
         # Create instance of a robot
         try:
